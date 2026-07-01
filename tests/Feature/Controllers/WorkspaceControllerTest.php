@@ -36,3 +36,16 @@ it('can create workspace', function (): void {
     expect($workspaces->count())->toBe(1)
         ->and($workspaces->first()->name)->toBe('Test Workspace');
 });
+
+it('can update workspace name', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->for($user)->create(['name' => 'Hashane']);
+
+    $response = $this->actingAs($user)->patch(route('workspace.update', $workspace), [
+        'name' => 'Nuno Maduro',
+    ]);
+
+    $response->assertRedirectBack();
+
+    expect($workspace->refresh()->name)->toBe('Nuno Maduro');
+});
