@@ -47,6 +47,8 @@ final class MessageCreated implements ShouldBroadcast, ShouldQueue
     {
         return [
             'id' => $this->message->id,
+            'channel_id' => $this->message->channel_id,
+            'user_id' => $this->message->user_id,
         ];
     }
 }

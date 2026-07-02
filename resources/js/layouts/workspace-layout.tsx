@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { useEcho } from '@laravel/echo-react';
 import { type PropsWithChildren, useState } from 'react';
 import CreateWorkspaceDialog from '@/components/create-workspace-dialog';
 import PendingInvitations from '@/components/pending-invitations';
@@ -10,6 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { playMessageChime } from '@/lib/sound';
 import { nickColorFor, handleFor, initialsFor } from '@/lib/user';
 import { show as channelShow } from '@/routes/channel';
 import {
@@ -55,6 +57,35 @@ export default function WorkspaceLayout({
     const [createOpen, setCreateOpen] = useState(false);
 
     const others = workspaces.filter((w) => w.slug !== workspace.slug);
+
+    const activeChannelId = workspace.channels.find(
+        (c) => c.slug === activeChannelSlug,
+    )?.id;
+
+    // Ping when a message lands somewhere the user isn't looking — a channel
+    // they aren't viewing, or any channel while the window isn't focused.
+    useEcho<{ id: string; channel_id: string; user_id: string }>(
+        `workspaces.${workspace.id}`,
+        '.MessageCreated',
+        ({ channel_id, user_id }) => {
+            if (String(user_id) === String(user.id)) {
+                return;
+            }
+
+            const target = workspace.channels.find((c) => c.id === channel_id);
+
+            if (target?.muted) {
+                return;
+            }
+
+            const isActive =
+                channel_id === activeChannelId && document.hasFocus();
+
+            if (!isActive) {
+                playMessageChime();
+            }
+        },
+    );
 
     return (
         <div className="flex h-screen bg-ink-900 font-mono text-fg">
