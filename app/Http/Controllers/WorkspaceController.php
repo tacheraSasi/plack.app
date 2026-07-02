@@ -21,19 +21,22 @@ use Inertia\Response;
 
 final readonly class WorkspaceController
 {
-    public function index(#[CurrentUser] User $user, ListWorkspace $listWorkspace): Response
+    public function index(#[CurrentUser] User $user): RedirectResponse|Response
     {
-        $workspaces = $listWorkspace->get($user);
+        $workspace = $user->workspaces()->oldest()->first();
 
-        return Inertia::render('workspace/list', [
-            'workspaces' => $workspaces,
-        ]);
+        if ($workspace instanceof Workspace) {
+            return to_route('workspace.show', $workspace);
+        }
+
+        return Inertia::render('workspace/empty');
     }
 
-    public function show(#[CurrentUser] User $user, Workspace $workspace): Response
+    public function show(#[CurrentUser] User $user, Workspace $workspace, ListWorkspace $listWorkspace): Response
     {
         return Inertia::render('workspace/show', [
             'workspace' => $workspace->load(['channels' => fn (HasMany $channels) => $channels->latest()]),
+            'workspaces' => $listWorkspace->get($user),
         ]);
     }
 

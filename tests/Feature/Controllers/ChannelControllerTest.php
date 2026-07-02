@@ -36,7 +36,8 @@ it('can show a channel', function (): void {
             ->component('channel/show')
             ->where('channel.id', $channel->id)
             ->where('channel.name', 'general')
-            ->where('channel.workspace.id', $workspace->id)
+            ->where('workspace.id', $workspace->id)
+            ->has('workspace.channels')
         );
 });
 

@@ -36,7 +36,7 @@ export default function Login({
                         'radial-gradient(58% 46% at 50% 44%, rgba(229,162,61,.06), transparent 72%)',
                 }}
             />
-            
+
             {canRegister && (
                 <div className="absolute top-6 right-9 z-10 text-xs tracking-[.02em] text-[#5a5344]">
                     new here?{' '}

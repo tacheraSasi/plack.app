@@ -1,11 +1,6 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import CreateChannelDialog from '@/components/create-channel-dialog';
-import EditChannelDialog from '@/components/edit-channel-dialog';
-import Heading from '@/components/heading';
-import AppLayout from '@/layouts/app-layout';
-import { show as channelShow } from '@/routes/channel';
-import { index, show } from '@/routes/workspace';
-import type { BreadcrumbItem } from '@/types';
+import WorkspaceLayout from '@/layouts/workspace-layout';
 
 type Channel = {
     id: string;
@@ -13,83 +8,72 @@ type Channel = {
     slug: string;
 };
 
-type Workspace = {
+type WorkspaceSummary = {
     id: string;
     name: string;
     slug: string;
+};
+
+type Workspace = WorkspaceSummary & {
     channels: Channel[];
 };
 
-export default function WorkspaceShow({ workspace }: { workspace: Workspace }) {
-    const channels = workspace.channels;
+type Paginated<T> = {
+    data: T[];
+};
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'Workspaces',
-            href: index(),
-        },
-        {
-            title: workspace.name,
-            href: show(workspace.slug),
-        },
-    ];
+export default function WorkspaceShow({
+    workspace,
+    workspaces,
+}: {
+    workspace: Workspace;
+    workspaces?: Paginated<WorkspaceSummary>;
+}) {
+    const channels = workspace.channels;
+    const channelCount = channels.length;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <WorkspaceLayout workspace={workspace} workspaces={workspaces?.data}>
             <Head title={workspace.name} />
 
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                    <Heading
-                        title={workspace.name}
-                        description="Connect channels to this workspace."
-                    />
+            {/* header */}
+            <header className="flex items-baseline justify-between gap-3 border-b border-line px-6 py-[15px]">
+                <div className="flex items-baseline gap-3">
+                    <span className="text-[15px] font-semibold text-amber">
+                        {workspace.name}
+                    </span>
+                    <span className="text-[11px] text-mute">
+                        {channelCount === 1
+                            ? '1 channel'
+                            : `${channelCount} channels`}
+                    </span>
                 </div>
 
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <Heading variant="small" title="Channels" />
+                <CreateChannelDialog workspaceSlug={workspace.slug} />
+            </header>
 
-                        <CreateChannelDialog workspaceSlug={workspace.slug} />
-                    </div>
-
-                    {channels.length === 0 ? (
-                        <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-sidebar-border/70 p-12 dark:border-sidebar-border">
-                            <p className="text-sm text-muted-foreground">
-                                No channels connected yet.
-                            </p>
-
-                            <CreateChannelDialog
-                                workspaceSlug={workspace.slug}
-                            />
-                        </div>
-                    ) : (
-                        <ul className="flex flex-col gap-2">
-                            {channels.map((channel) => (
-                                <li
-                                    key={channel.id}
-                                    className="flex items-center justify-between rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
-                                >
-                                    <Link
-                                        href={channelShow({
-                                            workspace: workspace.slug,
-                                            channel: channel.slug,
-                                        })}
-                                        className="font-medium hover:underline"
-                                    >
-                                        {channel.name}
-                                    </Link>
-
-                                    <EditChannelDialog
-                                        workspaceSlug={workspace.slug}
-                                        channel={channel}
-                                    />
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+            {/* message log — bottom-anchored empty state */}
+            <div className="flex flex-1 flex-col justify-end gap-[14px] overflow-y-auto px-6 py-[18px] text-[12.5px] leading-[1.55]">
+                <div className="text-faint">
+                    {channelCount === 0
+                        ? '# no channels yet — create one to get started'
+                        : '# select a channel to start'}
                 </div>
             </div>
-        </AppLayout>
+
+            {/* composer — visual only, no channel selected */}
+            <form
+                onSubmit={(e) => e.preventDefault()}
+                className="mx-6 mb-5 flex items-center gap-2 border border-line px-[14px] py-[11px] text-[12.5px] text-faint"
+            >
+                <span className="text-green">&gt;</span>
+                <input
+                    type="text"
+                    disabled
+                    placeholder="select a channel to send a message"
+                    className="min-w-0 flex-1 bg-transparent text-fg caret-green outline-none placeholder:text-faint"
+                />
+            </form>
+        </WorkspaceLayout>
     );
 }

@@ -1,68 +1,78 @@
 import { Head } from '@inertiajs/react';
 import EditChannelDialog from '@/components/edit-channel-dialog';
-import Heading from '@/components/heading';
-import AppLayout from '@/layouts/app-layout';
-import { show as channelShow } from '@/routes/channel';
-import { index, show as workspaceShow } from '@/routes/workspace';
-import type { BreadcrumbItem } from '@/types';
-
-type Workspace = {
-    id: string;
-    name: string;
-    slug: string;
-};
+import WorkspaceLayout from '@/layouts/workspace-layout';
 
 type Channel = {
     id: string;
     name: string;
     slug: string;
-    workspace: Workspace;
 };
 
-export default function ChannelShow({ channel }: { channel: Channel }) {
-    const workspace = channel.workspace;
+type WorkspaceSummary = {
+    id: string;
+    name: string;
+    slug: string;
+};
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'Workspaces',
-            href: index(),
-        },
-        {
-            title: workspace.name,
-            href: workspaceShow(workspace.slug),
-        },
-        {
-            title: channel.name,
-            href: channelShow({
-                workspace: workspace.slug,
-                channel: channel.slug,
-            }),
-        },
-    ];
+type Workspace = WorkspaceSummary & {
+    channels: Channel[];
+};
 
+type Paginated<T> = {
+    data: T[];
+};
+
+export default function ChannelShow({
+    workspace,
+    channel,
+    workspaces,
+}: {
+    workspace: Workspace;
+    channel: Channel;
+    workspaces?: Paginated<WorkspaceSummary>;
+}) {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <WorkspaceLayout
+            workspace={workspace}
+            workspaces={workspaces?.data}
+            activeChannelSlug={channel.slug}
+        >
             <Head title={channel.name} />
 
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                    <Heading
-                        title={channel.name}
-                        description="Messages posted to this channel."
-                    />
-
-                    <EditChannelDialog
-                        workspaceSlug={workspace.slug}
-                        channel={channel}
-                    />
+            {/* header */}
+            <header className="flex items-baseline justify-between gap-3 border-b border-line px-6 py-[15px]">
+                <div className="flex items-baseline gap-3">
+                    <span className="text-[15px] font-semibold text-amber">
+                        # {channel.name}
+                    </span>
+                    <span className="text-[11px] text-mute">
+                        {workspace.name}
+                    </span>
                 </div>
 
-                <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-sidebar-border/70 p-12 dark:border-sidebar-border">
-                    <p className="text-sm text-muted-foreground">
-                        No messages yet.
-                    </p>
-                </div>
+                <EditChannelDialog
+                    workspaceSlug={workspace.slug}
+                    channel={channel}
+                />
+            </header>
+
+            {/* message log — bottom-anchored */}
+            <div className="flex flex-1 flex-col justify-end gap-[14px] overflow-y-auto px-6 py-[18px] text-[12.5px] leading-[1.55]">
+                <div className="text-faint"># no messages yet — say hello</div>
             </div>
-        </AppLayout>
+
+            {/* composer — visual only */}
+            <form
+                onSubmit={(e) => e.preventDefault()}
+                className="mx-6 mb-5 flex items-center gap-2 border border-line px-[14px] py-[11px] text-[12.5px] text-faint"
+            >
+                <span className="text-green">&gt;</span>
+                <input
+                    type="text"
+                    placeholder={`message #${channel.name}`}
+                    className="min-w-0 flex-1 bg-transparent text-fg caret-green outline-none placeholder:text-faint"
+                />
+            </form>
+        </WorkspaceLayout>
     );
 }
